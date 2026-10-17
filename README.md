@@ -4,6 +4,8 @@ termux command
 pkg update && pkg install nmap python -y
 pip install requests beautifulsoup4
 
+pip install torch transformers
+
 run python command 
 
 python auditor_tool.py
