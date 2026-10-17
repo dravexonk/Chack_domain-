@@ -1,3 +1,7 @@
+only education purpose 
+
+
+
 termux command 
 
 
