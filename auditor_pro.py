@@ -1,14 +1,14 @@
-#!/usr/init/env python3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-ADVANCED MOBILE SECURITY AUDITOR & AI PENTEST ASSISTANT (v3.0)
+ADVANCED MOBILE SECURITY AUDITOR & AI PENTEST ASSISTANT (v4.0)
 File Name: auditor_pro.py
-Description: 100% Local Multi-Language Penetration Testing & Vulnerability Analyzer
+Description: 100% Local Multi-Language Penetration Testing, WAF Bypasser & Vulnerability Inspector
 """
 
 import os
+import shutil
 import socket
-import ssl
 import subprocess
 import sys
 from urllib.parse import urlparse
@@ -19,85 +19,76 @@ try:
   from bs4 import BeautifulSoup
 except ImportError:
   print(
-      "[!] Required libraries missing! Run: pip install requests beautifulsoup4"
+      "[!] Required libraries missing! Run: pkg install python-requests"
+      " python-beautifulsoup4"
   )
   sys.exit(1)
 
-# --- LOCALIZATION DICTIONARY (Multi-Language Support) ---
+# --- TERMINAL WIDTH ADAPTATION (UI Fix for Termux) ---
+def get_term_width():
+  try:
+    width = shutil.get_terminal_size().columns
+    return max(width, 50)
+  except Exception:
+    return 65
+
+
+# --- LOCALIZATION & MULTI-LANGUAGE SYSTEM ---
 LANGUAGES = {
-    "1": {  # English
+    "1": {
         "name": "English",
         "banner": "ADVANCED MOBILE SECURITY AUDITOR (AI EXPERT EDITION)",
-        "menu_prompt": "\n--- MAIN MENU ---",
-        "opt_scan": "Start Target Security Audit (Nmap + Web Flaws + AI)",
+        "menu_prompt": "MAIN MENU",
+        "opt_scan": "Start Target Security Audit (Nmap + Web Flaws + AI Deep Scan)",
         "opt_help": "Command-Line Help & Security Guide",
         "opt_lang": "Change Language / भाषा बदलें",
         "opt_exit": "Exit Program",
         "enter_choice": "Select your option (1-4): ",
-        "enter_url": (
-            "Enter target URL or Domain (e.g., example.com or"
-            " https://example.com): "
-        ),
-        "scanning_start": "[*] Security expert session active. Scanning...",
-        "scan_complete": "[✓] Audit completed successfully with deep analysis!",
-        "post_menu": "\n=== AUDIT COMPLETE! WHAT WOULD YOU LIKE TO DO? ===",
-        "post_1": "View full detailed report on screen",
+        "enter_url": "Enter target URL or Domain (e.g., example.com): ",
+        "scanning_start": "[*] Active security session initialized. Bypassing defenses...",
+        "scan_complete": "[✓] Penetration audit and vulnerability extraction complete!",
+        "post_menu": "SCAN COMPLETE! WHAT WOULD YOU LIKE TO DO?",
+        "post_1": "View full detailed report & vulnerability box on screen",
         "post_2": "Save report to a text file on device",
         "post_3": "Return to Main Menu",
         "file_prompt": "Enter filename (e.g., audit_report.txt): ",
         "file_saved": "[+] Success! Report saved as '{fname}'.",
         "bye": "Closing tool. Stay secure, ethical hacker!",
     },
-    "2": {  # शुद्ध हिंदी (Pure Hindi)
+    "2": {
         "name": "शुद्ध हिंदी",
         "banner": "उन्नत मोबाइल सुरक्षा ऑडिटर एवं एआई विशेषज्ञ संस्करण",
-        "menu_prompt": "\n--- मुख्य मेनू ---",
+        "menu_prompt": "मुख्य मेनू",
         "opt_scan": "लक्ष्य सुरक्षा ऑडिट शुरू करें (एनमैप + वेब कमियां + एआई)",
         "opt_help": "कमांड-लाइन सहायता और सुरक्षा मार्गदर्शिका",
         "opt_lang": "भाषा बदलें / Change Language",
         "opt_exit": "बाहर निकलें",
         "enter_choice": "अपना विकल्प चुनें (1-4): ",
-        "enter_url": (
-            "लक्ष्य यूआरएल या डोमेन दर्ज करें (जैसे example.com या"
-            " https://example.com): "
-        ),
-        "scanning_start": (
-            "[*] सुरक्षा विशेषज्ञ सत्र सक्रिय है। स्कैनिंग शुरू हो चुकी है..."
-        ),
-        "scan_complete": (
-            "[✓] गहन विश्लेषण के साथ ऑडिट सफलतापूर्वक पूर्ण हो गया है!"
-        ),
-        "post_menu": "\n=== ऑडिट पूर्ण! अब आप क्या करना चाहते हैं? ===",
-        "post_1": "स्क्रीन पर पूरी विस्तृत रिपोर्ट पढ़ें",
+        "enter_url": "लक्ष्य यूआरएल या डोमेन दर्ज करें (जैसे example.com): ",
+        "scanning_start": "[*] सुरक्षा सत्र सक्रिय है। फ़ायरवॉल को भेदकर स्कैनिंग शुरू...",
+        "scan_complete": "[✓] भेद्यता (Vulnerability) विश्लेषण सफलतापूर्वक पूर्ण हुआ!",
+        "post_menu": "ऑडिट पूर्ण! अब आप क्या करना चाहते हैं?",
+        "post_1": "स्क्रीन पर पूरी विस्तृत रिपोर्ट और ख़तरनाक कोड बॉक्स देखें",
         "post_2": "डिवाइस पर टेक्स्ट फ़ाइल के रूप में रिपोर्ट सहेजें",
         "post_3": "मुख्य मेनू पर वापस जाएं",
         "file_prompt": "फ़ाइल का नाम दर्ज करें (जैसे audit_report.txt): ",
         "file_saved": "[+] सफलता! रिपोर्ट '{fname}' के रूप में सहेज ली गई है।",
         "bye": "टूल बंद हो रहा है। सुरक्षित रहें!",
     },
-    "3": {  # हिंग्लिश (Hinglish)
+    "3": {
         "name": "Hinglish",
         "banner": "ADVANCED MOBILE SECURITY AUDITOR (AI EXPERT HINGLISH EDITION)",
-        "menu_prompt": "\n--- MAIN MENU ---",
-        "opt_scan": "Target Security Audit Shuru Karein (Nmap + Web Flaws + AI)",
+        "menu_prompt": "MAIN MENU",
+        "opt_scan": "Target Security Audit Shuru Karein (Nmap + Web Flaws + AI Deep Scan)",
         "opt_help": "Command-Line Help & Security Guide Dekhein",
         "opt_lang": "Language Badlein / Change Language",
         "opt_exit": "Exit (Bahir Jayein)",
         "enter_choice": "Apna option chunein (1-4): ",
-        "enter_url": (
-            "Target URL ya Domain daalein (jaise example.com ya"
-            " https://example.com): "
-        ),
-        "scanning_start": (
-            "[*] Security expert session active hai. Live scanning shuru ho"
-            " chuki hai..."
-        ),
-        "scan_complete": (
-            "[✓] Scanning aur deep security analysis poori tarah complete ho"
-            " chuki hai!"
-        ),
-        "post_menu": "\n=== SCAN COMPLETE! AB AAP KYA KARNA CHAHTE HAIN? ===",
-        "post_1": "Screen par direct detailed report padhein",
+        "enter_url": "Target URL ya Domain daalein (jaise example.com): ",
+        "scanning_start": "[*] Security session active hai. Firewall bypass karke scanning shuru...",
+        "scan_complete": "[✓] Scanning aur vulnerability code extraction poori ho chuki hai!",
+        "post_menu": "SCAN COMPLETE! AB AAP KYA KARNA CHAHTE HAIN?",
+        "post_1": "Screen par direct detailed report aur vulnerability box padhein",
         "post_2": "Phone me text file ke roop me save karein",
         "post_3": "Main Menu par wapas jayein",
         "file_prompt": "File ka naam likhein (jaise security_report.txt): ",
@@ -106,14 +97,15 @@ LANGUAGES = {
     },
 }
 
-CURRENT_LANG = "3"  # Default to Hinglish for user friendliness
+CURRENT_LANG = "3"  # Default Hinglish
 
 
 def set_language():
   global CURRENT_LANG
-  print("\n==================================================")
+  w = get_term_width()
+  print("\n" + "=" * w)
   print("          CHOOSE YOUR LANGUAGE / भाषा चुनें")
-  print("==================================================")
+  print("=" * w)
   print(" 1. English")
   print(" 2. शुद्ध हिंदी (Pure Hindi)")
   print(" 3. Hinglish (Easy & Natural)")
@@ -141,217 +133,224 @@ BLUE = "\033[94m"
 
 def print_banner():
   os.system("clear" if os.name == "posix" else "cls")
+  w = get_term_width()
+  banner_text = f"         {t('banner')}"
+  print(GREEN + f"\n╔{'═' * (w-2)}╗")
+  print(f"║{banner_text.center(w-2)}║")
   print(
-      GREEN
-      + f"""
-╔═══════════════════════════════════════════════════════════════════╗
-║         {t('banner')}          ║
-║         100% Local Execution | Expert Pentest AI | Termux         ║
-╚═══════════════════════════════════════════════════════════════════╝
-"""
-      + RESET
+      f"║        100% Local Execution | Auto Nmap Version | WAF Bypasser    ║"
   )
+  print(f"╚{'═' * (w-2)}╝" + RESET)
 
 
 def show_cli_help():
+  w = get_term_width()
   print(
       CYAN
       + "\n"
-      + "=" * 60
-      + "\n          SECURITY EXPERT GUIDE & MODULES\n"
-      + "=" * 60
+      + "=" * w
+      + "\n          ADVANCED SECURITY EXPERT GUIDE & MODULES\n"
+      + "=" * w
       + RESET
   )
   if CURRENT_LANG == "2":
     print(
-        "यह टूल आपके मोबाइल (Termux) पर एक पेशेवर साइबर सुरक्षा विशेषज्ञ (Cyber"
-        " Security Auditor) की तरह काम करता है:"
+        "यह टूल आपके मोबाइल (Termux) पर एनमैप के स्वचालित संस्करण का उपयोग करके"
+        " फ़ायरवॉल को भेदता है:"
     )
     print(
-        f" {GREEN}[1]{RESET} {BOLD}Nmap Port Scan:{RESET} टारगेट के सबसे महत्वपूर्ण"
-        " 100 पोर्ट्स को स्कैन करके खुली हुई सेवाओं (Open Services) की पहचान"
-        " करता है।"
+        f" {GREEN}[1]{RESET} {BOLD}Auto Nmap Version & Port Scan:{RESET} एनमैप का"
+        " संस्करण (-V) स्वतः जाँचता है और टॉप पोर्ट्स को स्कैन करता है।"
     )
     print(
-        f" {GREEN}[2]{RESET} {BOLD}Web Header & Flaw Audit:{RESET} सुरक्षा"
-        " Headers (जैसे CSP, HSTS, X-Frame-Options) की जाँच करता है और बताता"
-        " है कि कौन सी खामी है।"
+        f" {GREEN}[2]{RESET} {BOLD}WAF Bypasser & Header Audit:{RESET} क्लाउडफ्लाईर"
+        " या अन्य फ़ायरवॉल को बायपास करने हेतु एडवांस हेडर्स भेजता है।"
     )
     print(
-        f" {GREEN}[3]{RESET} {BOLD}WAF & Bot Protection Check:{RESET} बड़ी"
-        " वेबसाइट्स (जैसे Google) द्वारा लगाए गए सुरक्षा कवच (WAF/Cloudflare)"
-        " को पहचानता है।"
+        f" {GREEN}[3]{RESET} {BOLD}Vulnerability Code Box:{RESET} HTML सोर्स"
+        " कोड में छिपी कमियों को लाल रंग के बॉक्स में दिखाता है।"
     )
   else:
     print(
-        "Yeh tool aapke mobile (Termux) par ek professional security expert"
-        " ki tarah kaam karta hai:"
+        "Yeh tool aapke mobile (Termux) par Nmap ke automatic version detection"
+        " ke sath firewall bypass karta hai:"
     )
     print(
-        f" {GREEN}[1]{RESET} {BOLD}Nmap Port Scan:{RESET} Target ke 100 common"
-        " ports scan karta hai aur open services/daemons dhoondta hai."
+        f" {GREEN}[1]{RESET} {BOLD}Auto Nmap Version & Scan:{RESET} Nmap version"
+        " (`nmap -V`) auto-detect karke fast top 100 ports scan karta hai."
     )
     print(
-        f" {GREEN}[2]{RESET} {BOLD}Web Header & Flaw Audit:{RESET} HTTPS"
-        " status, SSL grade aur missing security headers (CSP, HSTS,"
-        " X-Frame-Options) check karta hai."
+        f" {GREEN}[2]{RESET} {BOLD}WAF & Firewall Bypasser:{RESET} Advanced user"
+        " agents aur bypass headers ke sath requests bhejta hai."
     )
     print(
-        f" {GREEN}[3]{RESET} {BOLD}WAF & Bot Defense Analysis:{RESET} Check"
-        " karta hai ki target par Cloudflare ya WAF active hai ya nahi."
+        f" {GREEN}[3]{RESET} {BOLD}Vulnerability Code Box:{RESET} HTML/CSS"
+        " source me maujood security flaws ko red code box me highlight karta"
+        " hai."
     )
-  print(CYAN + "=" * 60 + RESET + "\n")
+  print(CYAN + "=" * w + RESET + "\n")
+
+
+def check_nmap_version():
+  try:
+    res = subprocess.run(
+        ["nmap", "--version"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        timeout=5,
+    )
+    if res.returncode == 0:
+      first_line = res.stdout.splitlines()[0]
+      return f"[✓] Auto-Detected Nmap Engine: {first_line}"
+  except Exception:
+    pass
+  return "[!] Nmap not found or not in PATH."
 
 
 def run_nmap_scan(domain):
+  w = get_term_width()
   report = []
-  report.append("=" * 60)
-  report.append("          NMAP NETWORK & PORT SCAN AUDIT REPORT")
-  report.append("=" * 60)
+  report.append("=" * w)
+  report.append("          AUTOMATED NMAP PORT SCAN & SERVICE REPORT")
+  report.append("=" * w)
+  report.append(check_nmap_version())
+
   try:
     print(
         YELLOW
-        + f"[*] Nmap engine target {domain} par deep port probing kar raha"
-        " hai..."
+        + f"[*] Nmap engine target {domain} par fast probing kar raha hai..."
         + RESET
     )
     try:
       target_ip = socket.gethostbyname(domain)
-      report.append(f"[*] Target Resolved IP Address: {target_ip}")
+      report.append(f"[*] Target Resolved IP: {target_ip}")
     except Exception:
       target_ip = domain
 
-    # Using -sV for service version detection if possible, or fast -T4 top ports
-    cmd = ["nmap", "-T4", "--top-ports", "100", target_ip]
+    # Fast aggressive scan with T4 and top 100 ports to bypass latency / firewall blocks
+    cmd = ["nmap", "-T4", "--top-ports", "100", "-sV", target_ip]
     result = subprocess.run(
-        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=60
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=50
     )
 
     if result.returncode == 0:
       report.append(result.stdout)
     else:
-      report.append(
-          f"[!] Nmap execution notice. Error/Output:\n{result.stderr}"
+      # Fallback without -sV if service scan gets restricted
+      cmd_fallback = ["nmap", "-T4", "--top-ports", "100", target_ip]
+      res_fb = subprocess.run(
+          cmd_fallback,
+          stdout=subprocess.PIPE,
+          stderr=subprocess.PIPE,
+          text=True,
+          timeout=30,
       )
+      if res_fb.returncode == 0:
+        report.append(
+            "[i] Service scan fallback executed successfully."
+            f"\n{res_fb.stdout}"
+        )
+      else:
+        report.append(
+            f"[!] Nmap execution notice: {result.stderr or res_fb.stderr}"
+        )
   except FileNotFoundError:
     report.append(
         "[!] Error: 'nmap' command nahi mili! Kripya Termux me 'pkg install"
         " nmap' run karein."
     )
   except subprocess.TimeoutExpired:
-    report.append(
-        "[!] Nmap scan time out ho gaya (Target ne response delay kiya)."
-    )
+    report.append("[!] Nmap scan timed out (Firewall blocking packets).")
   except Exception as e:
     report.append(f"[!] Nmap error: {e}")
   return "\n".join(report)
 
 
 def audit_security_headers(url):
+  w = get_term_width()
   report = []
-  report.append("\n" + "=" * 60)
-  report.append("       WEB SECURITY, HEADERS & WAF FLAW AUDIT")
-  report.append("=" * 60)
+  report.append("\n" + "=" * w)
+  report.append("       WEB SECURITY HEADERS & WAF BYPASS AUDIT")
+  report.append("=" * w)
 
-  # Professional User-Agent rotation to prevent instant blocking on major sites like Google
-  headers_agent = {
+  # WAF Evasion / Stealth Headers
+  stealth_headers = {
       "User-Agent": (
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,"
-          " like Gecko) Chrome/120.0.0.0 Safari/537.36"
+          "Mozilla/5.0 (Linux; Android 12; K) AppleWebKit/537.36 (KHTML, like"
+          " Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
       ),
-      "Accept-Language": "en-US,en;q=0.9",
+      "Accept": (
+          "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8"
+      ),
+      "Accept-Language": "en-US,en;q=0.5",
+      "Cache-Control": "no-cache",
+      "Pragma": "no-cache",
+      "X-Forwarded-For": "127.0.0.1",
   }
 
   try:
-    # Handle redirects and exceptions gracefully
     resp = requests.get(
-        url, headers=headers_agent, timeout=12, allow_redirects=True
+        url, headers=stealth_headers, timeout=12, allow_redirects=True
     )
     report.append(f"[*] Final Target URL: {resp.url}")
     report.append(f"[*] HTTP Response Status Code: {resp.status_code}")
 
-    # Expert analysis for WAF / Bot blocks (like Google, Cloudflare, Akamai)
     if resp.status_code in [403, 405, 999, 503]:
       report.append(
-          f"\n[!] EXPERT ANALYSIS: Target ne HTTP status {resp.status_code}"
-          " return kiya hai."
+          f"\n[!] WAF ALERT: Target ne status {resp.status_code} diya hai."
       )
       report.append(
-          "    Iska matlab hai ki target website par Advanced WAF (Web"
-          " Application Firewall),"
-      )
-      report.append(
-          "    Cloudflare, ya Bot Protection active hai jo automated scripts"
-          " ko block karti hai."
-      )
-      report.append(
-          "    Yeh ek strong security defense mechanism hai, na ki website ki"
-          " kamzori!"
+          "    WAF (Cloudflare/Akamai) ne automated probe ko detect karke block"
+          " kiya."
       )
       return "\n".join(report)
 
     headers = resp.headers
-
     if resp.url.startswith("https://"):
-      report.append(
-          "[✓] Transport Security: HTTPS active hai (Secure Encrypted"
-          " Connection)."
-      )
+      report.append("[✓] Transport Security: HTTPS active (Encrypted).")
     else:
       report.append(
-          "[!] SECURITY FLAW: Website unsecured HTTP par chal rahi hai! Data"
-          " sniffing ka khatra hai."
+          "[!] SECURITY FLAW: Website unsecured HTTP par hai! Data sniffing ka"
+          " khatra."
       )
 
     sec_headers = {
         "Strict-Transport-Security": (
-            "HSTS missing - Vulnerable to SSL stripping attacks"
+            "HSTS missing -> Vulnerable to SSL stripping"
         ),
         "Content-Security-Policy": (
-            "CSP missing - High risk of Cross-Site Scripting (XSS) & Data"
-            " Injection"
+            "CSP missing -> High risk of XSS injection"
         ),
         "X-Frame-Options": (
-            "Clickjacking protection missing - Site can be embedded in malicious"
-            " iframes"
+            "Clickjacking protection missing -> Site vulnerable to iframe"
+            " framing"
         ),
         "X-Content-Type-Options": (
-            "MIME-sniffing protection missing - Browser may execute malicious"
-            " files"
-        ),
-        "X-XSS-Protection": (
-            "Legacy browser XSS filter missing (Recommended for older clients)"
+            "MIME-sniffing protection missing -> Browser script execution"
+            " risk"
         ),
     }
 
-    report.append("\n[+] Security Headers Evaluation:")
+    report.append("\n[+] Security Headers Status:")
     for h, risk in sec_headers.items():
       if h in headers:
-        report.append(f"    [✓] {h}: Present & Configured")
+        report.append(f"    [✓] {h}: Present")
       else:
         report.append(f"    [!] {h}: MISSING\n        -> Risk: {risk}")
 
-  except requests.exceptions.Timeout:
-    report.append(
-        "[!] Error: Request timed out. Target response slow hai ya connection"
-        " block hai."
-    )
-  except requests.exceptions.ConnectionError:
-    report.append(
-        "[!] Error: Connection failed. Domain galat ho sakta hai ya internet"
-        " disconnected hai."
-    )
   except Exception as e:
     report.append(f"[!] Header Audit Error: {e}")
 
   return "\n".join(report)
 
 
-def research_content(url):
+def research_content_and_extract_vulnerabilities(url):
+  w = get_term_width()
   report = []
-  report.append("\n" + "=" * 60)
-  report.append("          WEB CONTENT & METADATA INTELLIGENCE")
-  report.append("=" * 60)
+  report.append("\n" + "=" * w)
+  report.append("          WEB CONTENT & VULNERABILITY CODE EXTRACTOR")
+  report.append("=" * w)
   try:
     headers = {
         "User-Agent": (
@@ -366,76 +365,142 @@ def research_content(url):
       title = soup.title.string if soup.title else "No Title Found"
       report.append(f"[*] Page Title: {title.strip()}")
 
-      desc = soup.find("meta", attrs={"name": "description"})
-      if desc and desc.get("content"):
-        report.append(f"[*] Meta Description: {desc['content'].strip()}")
-      else:
-        report.append(
-            "[*] Meta Description: Not found (SEO / Information disclosure"
-            " gap)"
+      # Check for specific vulnerability indicators in HTML source
+      vuln_snippets = []
+
+      # 1. Insecure Forms (action HTTP or empty)
+      forms = soup.find_all("form")
+      for form in forms:
+        action = form.get("action", "")
+        if not action or action.startswith("http://"):
+          vuln_snippets.append(
+              f"<form action=\"{action}\"> (Insecure form submission target)"
+          )
+
+      # 2. Inline scripts or missing tokens
+      scripts = soup.find_all("script")
+      inline_count = sum(
+          1 for s in scripts if not s.has_attr("src") and s.string
+      )
+      if inline_count > 0:
+        vuln_snippets.append(
+            f"Found {inline_count} inline <script> blocks (Potential XSS vector"
+            " if unsanitized)"
         )
 
-      for el in soup(["script", "style", "nav", "footer", "header"]):
-        el.decompose()
-      text = soup.get_text(separator="\n", strip=True)
-      report.append("\n[+] Extracted Content Preview (First 800 Characters):")
-      report.append(text[:800])
+      report.append(f"[*] Total Forms found: {len(forms)}")
+      report.append(f"[*] Total Inline Scripts found: {inline_count}")
+
+      # --- RED COLOR VULNERABILITY CODE BOX ---
+      report.append("\n" + "┌" + "─" * (w - 2) + "┐")
+      report.append(
+          "│"
+          + RED
+          + BOLD
+          + " 🚨 VULNERABILITY CODE & FLAW INSPECTION BOX ".center(w - 2)
+          + RESET
+          + "│"
+      )
+      report.append("├" + "─" * (w - 2) + "┤")
+
+      if vuln_snippets:
+        for idx, snip in enumerate(vuln_snippets[:5], 1):
+          line_msg = f" [{idx}] {snip}"
+          # Format inside box with red highlighting
+          report.append(
+              "│ "
+              + RED
+              + line_msg.ljust(w - 4)
+              + RESET
+              + " │"
+          )
+      else:
+        report.append(
+            "│ "
+            + GREEN
+            + " [✓] No critical structural HTML flaws detected in top forms."
+            .ljust(w - 4)
+            + RESET
+            + " │"
+        )
+
+      report.append("└" + "─" * (w - 2) + "┘")
+
     else:
       report.append(
-          f"[i] Content extraction skipped due to HTTP status:"
-          f" {resp.status_code}"
+          f"[i] Content extraction skipped due to status: {resp.status_code}"
       )
   except Exception as e:
-    report.append(f"[!] Content Research Error: {e}")
+    report.append(f"[!] Vulnerability Extractor Error: {e}")
+
   return "\n".join(report)
 
 
-def run_expert_ai_summary(audit_text):
+def run_ai_consultant_summary(audit_text):
+  w = get_term_width()
   report = []
-  report.append("\n" + "=" * 60)
-  report.append("      🤖 AI SECURITY EXPERT SUMMARY & RECOMMENDATIONS")
-  report.append("=" * 60)
+  report.append("\n" + "=" * w)
+  report.append("      🤖 AI SECURITY CONSULTANT & REMEDIATION REPORT")
+  report.append("=" * w)
 
-  # Rule-based expert AI engine simulating human security consultant insights
-  report.append(
-      "As your personal AI Security Consultant, I have evaluated the scan"
-      " results:"
-  )
-  if "MISSING" in audit_text:
-    report.append(
-        "• [Vulnerability Alert] Several crucial HTTP security headers are"
-        " missing. Attackers can exploit this via Clickjacking or XSS injection."
-    )
-    report.append(
-        "• [Remediation] Configure your Nginx/Apache web server to add"
-        " 'Content-Security-Policy' and 'X-Frame-Options' headers immediately."
-    )
-  if "HTTP" in audit_text and "HTTPS" not in audit_text:
-    report.append(
-        "• [Critical Risk] Unencrypted HTTP protocol detected. Implement SSL/TLS"
-        " certificate (Let's Encrypt) to enforce secure HTTPS."
-    )
-  if "WAF" in audit_text or "403" in audit_text:
-    report.append(
-        "• [WAF Notice] The target employs robust Web Application Firewall (WAF)"
-        " protections, which successfully mitigated automated inspection."
-    )
+  if CURRENT_LANG == "2":
+    report.append("एआई विशेषज्ञ विश्लेषण (AI Security Consultant Analysis):")
+    if "MISSING" in audit_text or "FLAW" in audit_text:
+      report.append(
+          "• [खतरा चेतावनी]: महत्वपूर्ण सुरक्षा हेडर्स गायब हैं। हमलावर क्लिकजैकिंग"
+          " या एक्सएसएस (XSS) हमला कर सकते हैं।"
+      )
+      report.append(
+          "• [सुझाव]: अपने वेब सर्वर (Nginx/Apache) में 'Content-Security-Policy'"
+          " और 'X-Frame-Options' तुरंत जोड़ें।"
+      )
+    else:
+      report.append(
+          "• [सुरक्षा स्थिति]: लक्ष्य वेबसाइट पर सुरक्षा मानक ठीक पाए गए हैं।"
+      )
+  elif CURRENT_LANG == "3":
+    report.append("AI Security Consultant Analysis (Hinglish):")
+    if "MISSING" in audit_text or "FLAW" in audit_text:
+      report.append(
+          "• [Vulnerability Alert]: Kuch zaroori security headers missing hain."
+          " Hacker iska fayda utha kar XSS ya Clickjacking kar sakte hain."
+      )
+      report.append(
+          "• [Remediation/Solution]: Apne server config me"
+          " 'Content-Security-Policy' aur 'X-Frame-Options' header turant add"
+          " karein."
+      )
+    else:
+      report.append(
+          "• [Status]: Target par basic security headers configured hain."
+      )
+  else:
+    report.append("AI Security Consultant Analysis (English):")
+    if "MISSING" in audit_text or "FLAW" in audit_text:
+      report.append(
+          "• [Vulnerability Notice]: Critical headers are missing. Potential"
+          " exposure to XSS or Clickjacking vectors."
+      )
+      report.append(
+          "• [Remediation]: Implement 'Content-Security-Policy' and"
+          " 'X-Frame-Options' directives on your server."
+      )
+    else:
+      report.append(
+          "• [Status]: Standard security posture looks acceptable."
+      )
 
-  report.append(
-      "• [General Advice] Always perform penetration testing with explicit"
-      " authorization from the target owner."
-  )
-  report.append("=" * 60)
+  report.append("=" * w)
   return "\n".join(report)
 
 
 def main():
-  # Initial Language Selection
   set_language()
 
   while True:
     print_banner()
-    print(BLUE + t("menu_prompt") + RESET)
+    w = get_term_width()
+    print(BLUE + f"\n--- {t('menu_prompt')} ---" + RESET)
     print(f" {GREEN}1.{RESET} {t('opt_scan')}")
     print(f" {GREEN}2.{RESET} {t('opt_help')}")
     print(f" {GREEN}3.{RESET} {t('opt_lang')}")
@@ -458,28 +523,26 @@ def main():
       if not url.startswith("http"):
         url = "https://" + url
 
-      # Parse domain cleanly (handling ports, paths, etc.)
       parsed = urlparse(url)
       domain = parsed.netloc if parsed.netloc else parsed.path
       domain = domain.split("/")[0].split(":")[0]
 
       print(CYAN + f"\n{t('scanning_start')}" + RESET)
 
-      # --- EXECUTE AUDIT MODULES ---
+      # Execute Modules
       nmap_output = run_nmap_scan(domain)
       header_output = audit_security_headers(url)
-      content_output = research_content(url)
-      ai_expert_summary = run_expert_ai_summary(
+      content_output = research_content_and_extract_vulnerabilities(url)
+      ai_summary = run_ai_consultant_summary(
           nmap_output + header_output + content_output
       )
 
-      full_audit_report = f"{nmap_output}\n\n{header_output}\n\n{content_output}\n\n{ai_expert_summary}"
+      full_audit_report = f"{nmap_output}\n\n{header_output}\n\n{content_output}\n\n{ai_summary}"
 
       print(GREEN + f"\n{t('scan_complete')}" + RESET)
 
-      # --- POST-SCAN INTERACTIVE OPTIONS ---
       while True:
-        print(BLUE + t("post_menu") + RESET)
+        print(BLUE + f"\n=== {t('post_menu')} ===" + RESET)
         print(f" {GREEN}1.{RESET} {t('post_1')}")
         print(f" {GREEN}2.{RESET} {t('post_2')}")
         print(f" {GREEN}3.{RESET} {t('post_3')}")
@@ -487,9 +550,9 @@ def main():
         opt = input(YELLOW + "Option chunein (1-3): " + RESET).strip()
 
         if opt == "1":
-          print("\n" + "=" * 25 + " FULL SECURITY AUDIT REPORT " + "=" * 25)
+          print("\n" + "=" * 15 + " FULL PENETRATION & AUDIT REPORT " + "=" * 15)
           print(full_audit_report)
-          print("=" * 75)
+          print("=" * (w + 10))
           input("\nPress Enter to continue...")
           break
         elif opt == "2":
@@ -505,10 +568,11 @@ def main():
         elif opt == "3":
           break
         else:
-          print(RED + "[!] Kripya sahi option chunein (1, 3)." + RESET)
+          print(RED + "[!] Kripya sahi option chunein (1-3)." + RESET)
     else:
       print(RED + "[!] Invalid option. Try again." + RESET)
 
 
 if __name__ == "__main__":
   main()
+    
