@@ -16,7 +16,7 @@ run python command
 git clone
 https://github.com/dravexonk/Chack_domain-.git
 
-cd auditor_pro.py
+cd Chack_domain-
 
 python auditor_pro.py
 
