@@ -12,8 +12,12 @@ pip install requests beautifulsoup4
 pip install torch transformers
 
 run python command 
-git clone https://github.com/dravexonk/Chack_domain-.git
+
+git clone
+https://github.com/dravexonk/Chack_domain-.git
+
 cd auditor_pro.py
+
 python auditor_pro.py
 
 <img width="1084" height="2224" alt="1000114650" src="https://github.com/user-attachments/assets/c232ba59-505b-4e5d-952c-bcc77ff3a437" />
